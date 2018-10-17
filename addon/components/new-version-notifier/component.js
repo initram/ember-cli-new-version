@@ -3,7 +3,7 @@ import { getOwner } from '@ember/application';
 import Component from '@ember/component';
 import { get, computed } from '@ember/object';
 import Ember             from 'ember';
-import request           from 'ember-ajax/request';
+import fetch             from 'fetch';
 import layout            from './template';
 import { task, timeout } from 'ember-concurrency';
 
@@ -65,7 +65,14 @@ export default Component.extend({
     const url = this.get('url');
 
     try {
-      yield request(url, { cache: false, dataType: 'text' })
+      yield fetch(url)//TODO: add manual cache busting
+        .then(response => {
+          if (!response.ok) {
+            throw Error(response.statusText);
+          }
+
+          return response.text();
+        })
         .then(res => {
           const currentVersion = this.get('version');
           const newVersion     = res && res.trim();
