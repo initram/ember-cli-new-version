@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, find, waitUntil } from '@ember/test-helpers';
+import { render, find, waitUntil, waitFor } from '@ember/test-helpers';
 import hbs from 'htmlbars-inline-precompile';
 import setupMirage from '../../helpers/setup-mirage';
 import Mirage from 'ember-cli-mirage';
@@ -34,13 +34,15 @@ module('Integration | Component | new version notifier', function(hooks) {
     assert.notOk(find("#version-value"), "no version displayed when no upgrade available");
     assert.notOk(find("#last-version-value"), "no last version displayed when no upgrade available");
 
-    await waitUntil(() => callCount === 2, { timeout: 190 });
+    await waitUntil(() => callCount === 2, { timeout: 200 });
+    await waitFor("#version-value", { timeout: 95 });
 
     assert.equal(callCount, 2);
     assert.equal(find("#version-value").textContent, "v1.0.2");
     assert.equal(find("#last-version-value").textContent, "v1.0.1");
 
     await waitUntil(() => callCount === 6, { timeout: 490 });
+    await waitFor("#version-value", { timeout: 95 });
     assert.equal(callCount, 6);
     assert.equal(find("#version-value").textContent, "v1.0.3");
     assert.equal(find("#last-version-value").textContent, "v1.0.2");
@@ -125,10 +127,7 @@ module('Integration | Component | new version notifier', function(hooks) {
   test('it calls onError when request fails', async function(assert) {
     assert.expect(1);
 
-    let called = false;
-
     this.server.get('/VERSION.txt', function() {
-      called = true;
       return new Mirage.Response(500, {}, { message: '' });
     });
 
@@ -139,7 +138,7 @@ module('Integration | Component | new version notifier', function(hooks) {
 
     render(hbs`{{new-version-notifier updateInterval=100 enableInTests=true onError=onError}}`);
 
-    await waitUntil(() => called, { timeout: 95 });
+    await waitUntil(() => onErrorCalled, { timeout: 95 });
     assert.ok(onErrorCalled, 'onError was called');
   });
 });
